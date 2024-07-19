@@ -1,3 +1,7 @@
+## domain-alerts
+
+Script to check for domain expirations, sends an email and webhook for 45 day, 15 day and 7 day reminders.
+
 ```bash
 sudo cpan Net::Whois::Raw Date::Parse Date::Format Date::Calc LWP::UserAgent MIME::Lite Term::ReadKey
 ```
