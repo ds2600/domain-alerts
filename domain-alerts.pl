@@ -9,6 +9,8 @@ use LWP::UserAgent;
 use MIME::Lite;
 use Getopt::Long;
 use Term::ReadKey;
+use JSON;
+use Data::Dumper;
 
 no warnings 'once';
 
@@ -22,7 +24,13 @@ BEGIN {
 
 # Command line options
 my $test_mode = 0;
-GetOptions("test" => \$test_mode);
+my $debug_email = 0;
+my $debug_webhook = 0;
+GetOptions(
+    "test" => \$test_mode,
+    "debug-email" => \$debug_email,
+    "debug-webhook" => \$debug_webhook
+);
 
 # Function to send email alerts
 sub send_email {
@@ -33,14 +41,37 @@ sub send_email {
         Subject => $subject,
         Data    => $body
     );
-    $msg->send('smtp', $config::smtp_server, Port => $config::smtp_port, AuthUser => $config::smtp_user, AuthPass => $config::smtp_password);
+    $msg->send(
+        'smtp', 
+        $config::smtp_server, 
+        Port => $config::smtp_port, 
+        AuthUser => $config::smtp_user, 
+        AuthPass => $config::smtp_password,
+        Debug => $debug_email
+    );
 }
 
 # Function to send webhook alerts
 sub send_webhook {
     my ($message) = @_;
     my $ua = LWP::UserAgent->new;
-    my $response = $ua->post($config::webhook_url, { message => $message });
+    my $payload = encode_json({ content => $message });
+    $ua->agent('domain-alerts v1 (DiscordWebhookBot/1.0; +https://cmftcommunications.com/bot)');
+
+    my $response = $ua->post(
+        $config::webhook_url,
+        'Content-Type' => 'application/json',
+        content => $payload
+    );
+
+    if ($debug_webhook) {
+        print "Sending webhook to: $config::webhook_url\n";
+        print "Payload: " . Dumper({ content => $message }) . "\n";
+        print "Response code: " . $response->code . "\n";
+        print "Response message: " . $response->message . "\n";
+        print "Response content: " . $response->decoded_content . "\n";
+    }
+
     unless ($response->is_success) {
         warn "Failed to send webhook: " . $response->status_line;
     }
@@ -88,7 +119,7 @@ sub check_domain_expiration {
                 } else {
                     my $subject = "Domain Expiration Alert: $domain";
                     send_email($subject, $message);
-                    #send_webhook($message);
+                    send_webhook($message);
                 }
             }
         } else {
