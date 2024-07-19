@@ -81,7 +81,7 @@ sub check_domain_expiration {
                 print "Domain $domain expires on $expiry_date\n";
             }
 
-            if ($days_left >= 365 || $days_left == 15 || $days_left <= 7) {
+            if ($days_left == 45 || $days_left == 15 || $days_left <= 7) {
                 my $message = "Domain $domain will expire in $days_left days (on $expiry_date)";
                 if ($test_mode) {
                     print "$message\n";
