@@ -29,7 +29,7 @@ sub send_email {
     my ($subject, $body) = @_;
     my $msg = MIME::Lite->new(
         From    => $config::smtp_from,
-        To      => $config::alert_email,
+        To      => $config::alert_emails,
         Subject => $subject,
         Data    => $body
     );
@@ -88,7 +88,7 @@ sub check_domain_expiration {
                 } else {
                     my $subject = "Domain Expiration Alert: $domain";
                     send_email($subject, $message);
-                    send_webhook($message);
+                    #send_webhook($message);
                 }
             }
         } else {
