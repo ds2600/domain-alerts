@@ -11,6 +11,7 @@ use Getopt::Long;
 use Term::ReadKey;
 use JSON;
 use Data::Dumper;
+use Sys::Syslog qw(:standard :macros);
 
 no warnings 'once';
 
@@ -31,6 +32,8 @@ GetOptions(
     "debug-email" => \$debug_email,
     "debug-webhook" => \$debug_webhook
 );
+
+openlog('domain_checker', 'pid', LOG_USER);
 
 # Function to send email alerts
 sub send_email {
@@ -107,6 +110,8 @@ sub check_domain_expiration {
             my ($year, $month, $day) = split /-/, $expiry_date;
             my ($today_year, $today_month, $today_day) = Today();
             my $days_left = Delta_Days($today_year, $today_month, $today_day, $year, $month, $day);
+
+            syslog(LOG_INFO, "Checked domain $domain, expires on $expiry_date");
 
             if ($test_mode) {
                 print "Domain $domain expires on $expiry_date\n";
